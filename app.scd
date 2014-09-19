@@ -28,12 +28,13 @@ main_window.onClose = {
 // describe specific synth parameters
 synth_params = [
 	\kick -> [
-		[\brightness, 0.5, 0, 1],
+		[\brightness, 0.5, 0, 2],
+		[\clickDecay, 0.001, 0, 0.05],
 		[\thump, 0.1, 0.001, 0.3]],
 	\snare -> [
-		[\brightness, 0.5, 0, 1]],
+		[\brightness, 0.5, 0, 2]],
 	\clap -> [
-		[\brightness, 0.5, 0, 1],
+		[\brightness, 0.5, 0, 2],
 		[\bw, 0.5, 0.1, 4]],
 	\hat -> [
 		[\attack, 0.05, 0, 0.4],

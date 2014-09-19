@@ -1,8 +1,8 @@
-SynthDef(\kick, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, brightness = 1, thump = 0.1|
+SynthDef(\kick, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, brightness = 1, thump = 0.1, clickDecay = 0.001|
 
 	var freqEnv, sine, ampEnv, clickEnv, click;
 	freqEnv = Env.perc(0.0, thump, t_gate, -4);
-	clickEnv = Env.perc(0.0, 0.0001, t_gate, -4);
+	clickEnv = Env.perc(0.0, clickDecay, t_gate, -4);
 	ampEnv = Env.perc(0.0, decay, t_gate, 2);
 	sine = SinOsc.ar(
 		EnvGen.kr(freqEnv, t_gate, 12, 1) * 40 * pitch,
