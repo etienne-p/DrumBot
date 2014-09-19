@@ -1,4 +1,4 @@
-SynthDef(\kick, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 1, brightness = 1, thump = 0.1|
+SynthDef(\kick, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, brightness = 1, thump = 0.1|
 
 	var freqEnv, sine, ampEnv, clickEnv, click;
 	freqEnv = Env.perc(0.0, thump, t_gate, -4);
@@ -12,7 +12,7 @@ SynthDef(\kick, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 1, brightness = 
 	Out.ar(out, (sine + (click * brightness)));
 }).store;
 
-SynthDef(\clap, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 1, brightness = 1, bw = 0.5|
+SynthDef(\clap, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, brightness = 1, bw = 0.5|
 
 	var sawEnv, env, noise, saw, sawFreq = 100;
 	//-- 3 saw periods
@@ -26,7 +26,7 @@ SynthDef(\clap, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 1, brightness = 
 	Out.ar(out, (noise * EnvGen.ar(env, t_gate)));
 }).store;
 
-SynthDef(\snare, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 1, brightness = 1|
+SynthDef(\snare, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, brightness = 1|
 
 	var pulse, noise, noiseEnv, rez, ampHiEnv, ampLoEnv, res = 20;
 	ampHiEnv = Env.perc(0.0, decay * 0.3, t_gate, -2);
@@ -41,7 +41,7 @@ SynthDef(\snare, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 1, brightness =
 	Out.ar(out, BLowPass.ar(rez, 12000));
 }).store;
 
-SynthDef(\hat, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 1, attack=0.05|
+SynthDef(\hat, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, attack=0.05|
 	var env, noise;
 	env = Env.perc(attack, decay, t_gate, -2);
 	noise = WhiteNoise.ar(EnvGen.kr(env, t_gate));

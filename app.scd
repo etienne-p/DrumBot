@@ -5,46 +5,67 @@
 
 //--------------------------------------------------------------------
 (
-~make_slider = { |win, x, y, label, default, from, to, callback|
+~make_slider = { |label, default, from, to, callback|
 	var tf, num_box, slider;
-	num_box = NumberBox(win, Rect(x + 160, y, 40, 20));
-	slider = Slider(win, Rect(x, y, 160, 20))
+	num_box = NumberBox();
+	num_box.maxSize = Size(50, 20);
+	slider = Slider()
 	.action_({
 		var val = from + (slider.value * (to - from));
 		num_box.value_(val);
 		callback.value(val);
 	});
-	tf = StaticText(win, Rect(x + 210, y, 120, 20));
+	tf = StaticText();
 	tf.align = \left;
 	tf.string = label;
+	slider.orientation = \horizontal;
 	slider.value = (default - from) / (to - from);
 	slider.action.value;
+	GridLayout.rows([slider, num_box, tf]);
 }
 )
 
 //--------------------------------------------------------------------
 (
-
-var main_window, rout, hash, synthSymbols, synths, sub_windows;
+var main_window, rout, hash, synthSymbols, synths, key_dict, ui_elts;
 
 // create synths
 synthSymbols = [\kick, \snare, \clap, \hat];
 synths = Dictionary.newFrom(
 	synthSymbols.collect({|item, i|[item, Synth(item)] }).flat);
 
+// main window
+main_window = Window("main", Rect(0, 0, 220, 50)).front;
+main_window.alwaysOnTop = true;
+
+key_dict = [
+	\a, \kick,
+	\s, \snare,
+	\d, \clap,
+	\f, \hat].as(Dictionary);
+
+main_window.view.keyDownAction = { |v, key, mod|
+	var synth = key_dict.at(key.asSymbol);
+	if (synth != nil) { synths[synth].set(\t_gate, 0.6) };
+};
+
+main_window.onClose = {
+	Window.closeAll;
+	Server.freeAll();
+};
+
 // describe specific synth parameters
 hash = [
-\kick -> [
-	[\brightness, 0.5, 0, 1],
-	[\thump, 0.1, 0.001, 0.3]],
-\snare -> [
-	[\brightness, 0.5, 0, 1]],
-\clap -> [
-	[\brightness, 0.5, 0, 1],
-	[\bw, 0.5, 0.1, 4]],
-\hat -> [
-	[\attack, 0.05, 0, 0.4]]
-];
+	\kick -> [
+		[\brightness, 0.5, 0, 1],
+		[\thump, 0.1, 0.001, 0.3]],
+	\snare -> [
+		[\brightness, 0.5, 0, 1]],
+	\clap -> [
+		[\brightness, 0.5, 0, 1],
+		[\bw, 0.5, 0.1, 4]],
+	\hat -> [
+		[\attack, 0.05, 0, 0.4]]];
 
 // add common parameters
 hash.do({|assoc|
@@ -54,55 +75,20 @@ hash.do({|assoc|
 });
 
 // build UI
-sub_windows = List();
+ui_elts = List();
 hash.do({|assoc|
-	// for each instrument, create a window...
-	var win = Window(
-		assoc.key.asString,
-		Rect(0, 0, 400, 30 * assoc.value.size), false).front;
-
-	win.userCanClose = false;
-
+	var tf = StaticText();
+	tf.string = assoc.key.asString;
+	ui_elts.add(tf);
 	assoc.value.do({ |item, i|
 		// ...add a slider per parameter
-		~make_slider.value(
-			win, 0, i * 30,
-			(assoc.key.asString + "/" + item[0]),
-			item[1], item[2], item[3],
-			{|val| synths[assoc.key].set(item[0], val)});
-	});
-	sub_windows.add(win);
-});
-
-// test sound
-rout = Routine({
-	    loop({
-				synths[synthSymbols.choose].set(\t_gate, 0.6);
-		        0.2.wait;
-	    })
-}).play;
-
-// main window
-main_window = Window("main", Rect(0, 0, 220, 50)).front;
-main_window.alwaysOnTop = true;
-main_window.onClose = { rout.stop; Window.closeAll; };
-
-
-// place subwindows on screen
-Button(main_window, Rect(10, 10, 200, 30))
-        .states_([ ["place windows", Color.black, Color.white]]).action_({
-	var sumH = 0;
-	sub_windows.do({|item, i|
-		item.setTopLeftBounds(Rect(
-			0,
-			sumH,
-			item.bounds.width,
-			item.bounds.height
-		));
-		sumH = sumH + item.bounds.height + 50;
-		item.front;
+		ui_elts.add(
+			~make_slider.value(
+				item[0],
+				item[1], item[2], item[3],
+				{|val| synths[assoc.key].set(item[0], val)}));
 	});
 });
 
-
+main_window.layout = VLayout(*ui_elts);
 )
