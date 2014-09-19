@@ -41,11 +41,11 @@ SynthDef(\snare, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, brightness =
 	Out.ar(out, BLowPass.ar(rez, 12000));
 }).store;
 
-SynthDef(\hat, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, attack=0.05|
+SynthDef(\hat, {|out=#[0, 1], decay = 0.5, pitch = 1, t_gate = 0, attack = 0.05, bw = 0.5|
 	var env, noise;
 	env = Env.perc(attack, decay, t_gate, -2);
 	noise = WhiteNoise.ar(EnvGen.kr(env, t_gate));
-	Out.ar(out, BHiPass.ar(noise, 8000 * pitch));
+	Out.ar(out, BBandPass.ar(noise, 8000 * pitch, bw, bw.reciprocal));
 }).store;
 
 
