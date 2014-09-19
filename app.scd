@@ -27,15 +27,15 @@
 
 //--------------------------------------------------------------------
 (
-var main_window, rout, hash, synthSymbols, synths, key_dict, ui_elts;
+var main_window, rout, synth_params, synth_symbols, synths, key_dict, ui_elts;
 
 // create synths
-synthSymbols = [\kick, \snare, \clap, \hat];
+synth_symbols = [\kick, \snare, \clap, \hat];
 synths = Dictionary.newFrom(
-	synthSymbols.collect({|item, i|[item, Synth(item)] }).flat);
+	synth_symbols.collect({|item, i|[item, Synth(item)] }).flat);
 
 // main window
-main_window = Window("main", Rect(0, 0, 220, 50)).front;
+main_window = Window("main").front;
 main_window.alwaysOnTop = true;
 
 key_dict = [
@@ -55,7 +55,7 @@ main_window.onClose = {
 };
 
 // describe specific synth parameters
-hash = [
+synth_params = [
 	\kick -> [
 		[\brightness, 0.5, 0, 1],
 		[\thump, 0.1, 0.001, 0.3]],
@@ -68,7 +68,7 @@ hash = [
 		[\attack, 0.05, 0, 0.4]]];
 
 // add common parameters
-hash.do({|assoc|
+synth_params.do({|assoc|
 	assoc.value = assoc.value ++ [
 		[\decay, 0.2, 0.01, 0.8],
 		[\pitch, 1, 0.2, 2]];
@@ -76,7 +76,7 @@ hash.do({|assoc|
 
 // build UI
 ui_elts = List();
-hash.do({|assoc|
+synth_params.do({|assoc|
 	var tf = StaticText();
 	tf.string = assoc.key.asString;
 	ui_elts.add(tf);
@@ -84,8 +84,7 @@ hash.do({|assoc|
 		// ...add a slider per parameter
 		ui_elts.add(
 			~make_slider.value(
-				item[0],
-				item[1], item[2], item[3],
+				item[0], item[1], item[2], item[3],
 				{|val| synths[assoc.key].set(item[0], val)}));
 	});
 });
