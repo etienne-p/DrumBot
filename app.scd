@@ -22,7 +22,8 @@ main_window.view.keyDownAction = { |v, key, mod|
 
 main_window.onClose = {
 	Window.closeAll;
-	Server.freeAll();
+	Server.local.freeAll;
+	Server.local.quit;
 };
 
 // describe specific synth parameters
