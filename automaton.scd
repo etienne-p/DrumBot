@@ -1,4 +1,3 @@
-(
 var columns = 48;
 var rows = 48;
 var side = 6;
@@ -6,8 +5,9 @@ var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
-var win_rules_editor = Window("rules editor", Rect(0, 0, columns * side, rows * side)).front;
-var sync_rules_on_editor, sync_editor_on_rules, input_fields;
+var win_rules_editor = Window("rules editor").front;
+var slice_2D, sync_rules_on_editor, sync_editor_on_rules, input_fields, test_match;
+var drag_origin;
 var combinations = {
 	var rv = List();
 	rules.do({|x, i|
@@ -44,10 +44,21 @@ sync_editor_on_rules = {
 	})
 };
 
+slice_2D = { |source, top, left, width, height|
+	height.collect({|i| source[i].copyRange(left, left + width - 1)});
+};
+
+test_match = {|source, pattern, top, left|
+	// does the pattern fits in the source?
+	if (((left + pattern[0].size) <= source[0].size) &&
+		((top + pattern.size) <= source.size)
+	) {slice_2D(source, top, left, pattern) == pattern} {false};
+};
+
 // build rules editor ui
 input_fields = Array.newClear(combinations.size);
 win_rules_editor.layout = VLayout(*combinations.collect({|item, i |
-	var tf = TextField(win_rules_editor).keyUpAction_(sync_rules_on_editor);
+	var tf = TextField().keyUpAction_(sync_rules_on_editor);
 	input_fields.put(i, tf);
 	GridLayout.rows([
 		StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
@@ -72,10 +83,21 @@ win_automata.drawFunc = {
 			Pen.fillStroke;
 		})
 	});
+	// test pattern matches
+	if (~hotspots.isNil.not){
+		~hotspots.do({|spot, i|
+			if (test_match(cells, spot.pattern, spot.origin.x, spot.origin.y)) { ("hit " ++ spot.id.asString).postln };
+		})
+	};
+};
+
+win_automata.view.mouseDownAction = { |view, x, y| drag_origin = x@y };
+
+win_automata.view.mouseUpAction = { |view, x, y|
+
+	(drag_origin.asString ++ "->" ++(x@y).asString).postln;
 };
 
 sync_editor_on_rules.value;
 
 { while { win_automata.isClosed.not } { win_automata.refresh; 0.1.wait; } }.fork(AppClock);
-
-)
