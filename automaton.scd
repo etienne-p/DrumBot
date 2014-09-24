@@ -3,12 +3,12 @@ var columns = 48;
 var rows = 48;
 var side = 6;
 var rect = Rect(0, 0, side, side);
-var cells = Array.fill2D(rows, columns, { 2.rand });
+var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
 var win_rules_editor = Window("rules editor", Rect(0, 0, columns * side, rows * side)).front;
 var sync_rules_on_editor, sync_editor_on_rules, input_fields;
-var combinations =  {
+var combinations = {
 	var rv = List();
 	rules.do({|x, i|
 		x.do({|y, j|
@@ -18,7 +18,7 @@ var combinations =  {
 		})
 	});
 	rv;
-}.();
+}.value;
 
 // start with Wolfram rule 30
 rules[0][0][0] = 0;
@@ -32,10 +32,10 @@ rules[1][1][1] = 0;
 
 sync_rules_on_editor = {
 	input_fields.collect({|item, i|
-		var comb = combinations[i];
-		rules[comb[0]][comb[1]][comb[2]] = item.string.asInt.max(0).min(1);
+		{|j, k, l| rules[j][k][l] = item.string.asInt.max(0).min(1)}.(*combinations[i]);
 	});
-	sync_editor_on_rules.();
+	cells.first.do({|item, i| cells.first[i] = 2.rand});
+	sync_editor_on_rules.value;
 };
 
 sync_editor_on_rules = {
@@ -74,8 +74,8 @@ win_automata.drawFunc = {
 	});
 };
 
-sync_editor_on_rules.();
+sync_editor_on_rules.value;
 
-{ while { win_automata.isClosed.not } { win_automata.refresh; 0.1.wait; } }.fork(AppClock)
+{ while { win_automata.isClosed.not } { win_automata.refresh; 0.1.wait; } }.fork(AppClock);
 
 )
