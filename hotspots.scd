@@ -10,6 +10,19 @@ add_hotspot_editor = {|hotspot|
 
 
 
+slice_2D = { |source, top, left, width, height|
+	height.collect({|i| source[i].copyRange(left, left + width - 1)});
+};
+
+test_match = {|source, pattern, top, left|
+	// does the pattern fits in the source?
+	if (((left + pattern[0].size) <= source[0].size) &&
+		((top + pattern.size) <= source.size)
+	) {slice_2D(source, top, left, pattern) == pattern} {false};
+};
+
+
+
 
 
 

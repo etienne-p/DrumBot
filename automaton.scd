@@ -6,8 +6,9 @@ var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
 var win_rules_editor = Window("rules editor").front;
-var slice_2D, sync_rules_on_editor, sync_editor_on_rules, input_fields, test_match;
-var drag_origin;
+var sync_rules_on_editor, sync_editor_on_rules, input_fields;
+var hotspots = Array.fill(4, {columns.rand});
+//var drag_origin;
 var combinations = {
 	var rv = List();
 	rules.do({|x, i|
@@ -20,14 +21,14 @@ var combinations = {
 	rv;
 }.value;
 
-// start with Wolfram rule 30
-rules[0][0][0] = 0;
-rules[0][1][0] = 1;
-rules[1][0][0] = 1;
-rules[0][0][1] = 1;
-rules[1][0][1] = 0;
-rules[1][1][0] = 0;
+// da rule
+rules[0][0][0] = 1;
+rules[0][1][0] = 0;
+rules[0][1][0] = 0;
 rules[0][1][1] = 1;
+rules[1][0][0] = 0;
+rules[1][0][1] = 0;
+rules[1][1][0] = 1;
 rules[1][1][1] = 0;
 
 sync_rules_on_editor = {
@@ -42,17 +43,6 @@ sync_editor_on_rules = {
 	input_fields.do({|item, i|
 		item.string = combinations.[i].inject(rules, _.at(_)).asString;
 	})
-};
-
-slice_2D = { |source, top, left, width, height|
-	height.collect({|i| source[i].copyRange(left, left + width - 1)});
-};
-
-test_match = {|source, pattern, top, left|
-	// does the pattern fits in the source?
-	if (((left + pattern[0].size) <= source[0].size) &&
-		((top + pattern.size) <= source.size)
-	) {slice_2D(source, top, left, pattern) == pattern} {false};
 };
 
 // build rules editor ui
@@ -83,21 +73,28 @@ win_automata.drawFunc = {
 			Pen.fillStroke;
 		})
 	});
+	// TODO: reuse color object?
 	// test pattern matches
-	if (~hotspots.isNil.not){
-		~hotspots.do({|spot, i|
-			if (test_match(cells, spot.pattern, spot.origin.x, spot.origin.y)) { ("hit " ++ spot.id.asString).postln };
-		})
-	};
+	hotspots.do({|item|
+		// eval hotspot
+		var hit = 0;
+		{cells.last.at(item + hit) > 0}.while({hit = hit + 1});
+		// draw hotspot
+		rect.origin = (item * side)@((rows - 1) * side);
+		rect.width = hit.max(1) * side;
+		Pen.fillColor = Color(1, 0, 0, 0.5 + (0.5 * hit.min(1)));
+		Pen.fillRect(rect);
+		Pen.fillStroke;
+	});
 };
-
+/*
 win_automata.view.mouseDownAction = { |view, x, y| drag_origin = x@y };
 
 win_automata.view.mouseUpAction = { |view, x, y|
 
 	(drag_origin.asString ++ "->" ++(x@y).asString).postln;
 };
-
+*/
 sync_editor_on_rules.value;
 
 { while { win_automata.isClosed.not } { win_automata.refresh; 0.1.wait; } }.fork(AppClock);
