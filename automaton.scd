@@ -7,7 +7,12 @@ var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
 var win_rules_editor = Window("rules editor").front;
 var sync_rules_on_editor, sync_editor_on_rules, input_fields;
-var hotspots = Array.fill(4, {columns.rand});
+
+var hotspots = [\kick, \snare, \clap, \hat].collect({|item|(
+	id: item,
+	index: columns.rand,
+	color: Color(*Array.fill(3, {1.0.rand})))
+});
 //var drag_origin;
 var combinations = {
 	var rv = List();
@@ -78,13 +83,15 @@ win_automata.drawFunc = {
 	hotspots.do({|item|
 		// eval hotspot
 		var hit = 0;
-		{cells.last.at(item + hit) > 0}.while({hit = hit + 1});
+		{cells.last.at(item.index + hit) > 0}.while({hit = hit + 1});
 		// draw hotspot
-		rect.origin = (item * side)@((rows - 1) * side);
+		rect.origin = ((item.index) * side)@((rows - 1) * side);
 		rect.width = hit.max(1) * side;
-		Pen.fillColor = Color(1, 0, 0, 0.5 + (0.5 * hit.min(1)));
+		item.color.alpha = (0.5 + (0.5 * hit.min(1)));
+		Pen.fillColor = item.color;
 		Pen.fillRect(rect);
 		Pen.fillStroke;
+		if (hit > 0) {("Hit " ++ item.id.asString ++ " [" ++ hit.asString ++ "]").postln};
 	});
 };
 /*
