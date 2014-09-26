@@ -1,5 +1,25 @@
 var main_window, rout, synth_params, synth_symbols, synths, key_dict, ui_elts;
 
+var make_slider = { |label, default, from, to, callback|
+	var tf, num_box, slider;
+	num_box = NumberBox();
+	num_box.maxSize = Size(50, 20);
+	slider = Slider()
+	.action_({
+		var val = from + (slider.value * (to - from));
+		num_box.value_(val);
+		callback.value(val);
+	});
+	tf = StaticText();
+	tf.align = \left;
+	tf.string = label;
+	slider.orientation = \horizontal;
+	slider.value = (default - from) / (to - from);
+	slider.action.value;
+	GridLayout.rows([slider, num_box, tf]);
+};
+
+
 // create synths
 synth_symbols = [\kick, \snare, \clap, \hat];
 synths = Dictionary.newFrom(
@@ -15,10 +35,16 @@ key_dict = [
 	\d, \clap,
 	\f, \hat].as(Dictionary);
 
-main_window.view.keyDownAction = { |v, key, mod|
+main_window.view.keyDownAction = { |v, key|
 	var synth = key_dict.at(key.asSymbol);
 	if (synth != nil) { synths[synth].set(\t_gate, 0.6) };
 };
+
+~hotspot_handler = { |id, val|
+	("GLOBAL Hit " ++ id.asString ++ " [" ++ (val / 4).min(1).asString ++ "]").postln;
+	if (synths.at(id).isNil.not) { synths[id].set(\t_gate, (val / 4).min(1)) };
+};
+
 
 main_window.onClose = {
 	Window.closeAll;
@@ -57,7 +83,7 @@ synth_params.do({|assoc|
 	assoc.value.do({ |item, i|
 		// ...add a slider per parameter
 		ui_elts.add(
-			~make_slider.value(
+			make_slider.value(
 				item[0], item[1], item[2], item[3],
 				{|val| synths[assoc.key].set(item[0], val)}));
 	});

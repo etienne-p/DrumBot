@@ -8,6 +8,8 @@ var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).f
 var win_rules_editor = Window("rules editor").front;
 var sync_rules_on_editor, sync_editor_on_rules, input_fields;
 
+var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
+
 var hotspots = [\kick, \snare, \clap, \hat].collect({|item|(
 	id: item,
 	index: columns.rand,
@@ -59,13 +61,14 @@ win_rules_editor.layout = VLayout(*combinations.collect({|item, i |
 		StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
 }));
 
+
 // build automata ui
 win_automata.drawFunc = {
 	// update automata
-	var f = cells.first;
-	cells.addFirst(f.collect({ |item, i|
+	var row = cells.first;
+	cells.addFirst(row.collect({ |item, i|
 		[-1, 0, 1].collect(
-			{|offset| f.at((i + offset).mod(columns))}
+			{|offset| row.at((i + offset).mod(columns))}
 		).inject(rules, _.at(_));
 	}));
 	cells.pop;
@@ -78,12 +81,12 @@ win_automata.drawFunc = {
 			Pen.fillStroke;
 		})
 	});
-	// TODO: reuse color object?
-	// test pattern matches
+	// handle hotspots
 	hotspots.do({|item|
 		// eval hotspot
 		var hit = 0;
-		{cells.last.at(item.index + hit) > 0}.while({hit = hit + 1});
+		var row = cells.last;
+		{(row.at(item.index + hit) > 0).and((item.index + hit) < row.size)}.while({hit = hit + 1});
 		// draw hotspot
 		rect.origin = ((item.index) * side)@((rows - 1) * side);
 		rect.width = hit.max(1) * side;
@@ -91,17 +94,10 @@ win_automata.drawFunc = {
 		Pen.fillColor = item.color;
 		Pen.fillRect(rect);
 		Pen.fillStroke;
-		if (hit > 0) {("Hit " ++ item.id.asString ++ " [" ++ hit.asString ++ "]").postln};
+		if (hit > 0) { ~hotspot_handler.isNil.if({default_hotspot_handler}, {~hotspot_handler}).value(item.id, hit) };
 	});
 };
-/*
-win_automata.view.mouseDownAction = { |view, x, y| drag_origin = x@y };
 
-win_automata.view.mouseUpAction = { |view, x, y|
-
-	(drag_origin.asString ++ "->" ++(x@y).asString).postln;
-};
-*/
 sync_editor_on_rules.value;
 
 { while { win_automata.isClosed.not } { win_automata.refresh; 0.1.wait; } }.fork(AppClock);
