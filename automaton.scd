@@ -1,11 +1,13 @@
 var columns = 48;
 var rows = 48;
 var side = 6;
+var hit_threshold = 1;
 var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
 var win_rules_editor = Window("rules editor").front;
+var win_hotspots_editor = Window("hotspots editor").front;
 var sync_rules_on_editor, sync_editor_on_rules, input_fields;
 
 var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
@@ -61,6 +63,12 @@ win_rules_editor.layout = VLayout(*combinations.collect({|item, i |
 		StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
 }));
 
+// build hotspot editor ui
+win_hotspots_editor.layout = VLayout(*hotspots.collect({ |item, i|
+	~make_slider.value(
+		item.id.asString, item.index, 0, columns - 1,
+		{|val| item.index = val.floor; item.index; })
+}));
 
 // build automata ui
 win_automata.drawFunc = {
@@ -76,7 +84,7 @@ win_automata.drawFunc = {
 	cells.do({|row, i|
 		row.do({| cell, j|
 			rect.origin = (j * side)@( i * side);
-			Pen.fillColor = Color(cell, cell, cell);
+			Pen.fillColor = Color(cell * 0.2, cell * 0.2, cell * 0.2);
 			Pen.fillRect(rect);
 			Pen.fillStroke;
 		})
@@ -86,15 +94,18 @@ win_automata.drawFunc = {
 		// eval hotspot
 		var hit = 0;
 		var row = cells.last;
-		{(row.at(item.index + hit) > 0).and((item.index + hit) < row.size)}.while({hit = hit + 1});
+		{row.at(item.index + hit).isInteger.if(
+			{(row.at(item.index + hit) > 0)},
+			{false})}.while({hit = hit + 1});
 		// draw hotspot
 		rect.origin = ((item.index) * side)@((rows - 1) * side);
 		rect.width = hit.max(1) * side;
-		item.color.alpha = (0.5 + (0.5 * hit.min(1)));
 		Pen.fillColor = item.color;
 		Pen.fillRect(rect);
 		Pen.fillStroke;
-		if (hit > 0) { ~hotspot_handler.isNil.if({default_hotspot_handler}, {~hotspot_handler}).value(item.id, hit) };
+		item.id.asString.drawAtPoint(rect.origin + (0@(-12)));
+		if (hit > hit_threshold) {
+			~hotspot_handler.isNil.if({default_hotspot_handler}, {~hotspot_handler}).value(item.id, hit - 1) };
 	});
 };
 

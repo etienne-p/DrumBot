@@ -1,6 +1,6 @@
 (
 var basePath = PathName(thisProcess.nowExecutingPath).pathOnly;
-var files = ["synthdefs", "app"];
+var files = ["util", "synthdefs", "app", "automaton"];
 Server.local.boot;
 Server.local.waitForBoot(
 	{files.do({ |item, i|  thisProcess.interpreter.executeFile(basePath ++ item ++ ".scd") })},
