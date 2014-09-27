@@ -66,7 +66,7 @@ win_editor.layout = HLayout(
 	// build hotspot editor ui
 	VLayout(*(hotspots.collect({ |item, i|
 		var slider = Slider2D().action_({|sl|
-			item.position = (sl.x * (columns - 1).round)@((1 - sl.y) * (rows - 1).round)});
+			item.position = ((sl.x * (columns - 1)).round)@(((1 - sl.y) * (rows - 1)).round)});
 		var text = StaticText().string_(item.id.asString);
 		slider.setXY(1.0.rand, 1.0.rand);
 		slider.action.value(slider);
@@ -96,7 +96,7 @@ win_automata.drawFunc = {
 	hotspots.do({|item|
 		// eval hotspot
 		var hit = 0;
-		var row = cells.last;
+		var row = cells.at(item.position.y);
 		{row.at(item.position.x + hit).isInteger.if(
 			{(row.at(item.position.x + hit) > 0)},
 			{false})}.while({hit = hit + 1});
