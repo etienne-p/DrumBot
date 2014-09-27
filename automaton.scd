@@ -6,15 +6,14 @@ var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
-var win_rules_editor = Window("rules editor").front;
-var win_hotspots_editor = Window("hotspots editor").front;
+var win_editor = Window("editor").front;
 var sync_rules_on_editor, sync_editor_on_rules, input_fields;
 
 var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
 
 var hotspots = [\kick, \snare, \clap, \hat].collect({|item|(
 	id: item,
-	index: columns.rand,
+	position: (columns.rand)@(rows.rand),
 	color: Color(*Array.fill(3, {1.0.rand})))
 });
 //var drag_origin;
@@ -54,21 +53,25 @@ sync_editor_on_rules = {
 	})
 };
 
-// build rules editor ui
 input_fields = Array.newClear(combinations.size);
-win_rules_editor.layout = VLayout(*combinations.collect({|item, i |
-	var tf = TextField().keyUpAction_(sync_rules_on_editor);
-	input_fields.put(i, tf);
-	GridLayout.rows([
-		StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
-}));
 
-// build hotspot editor ui
-win_hotspots_editor.layout = VLayout(*hotspots.collect({ |item, i|
-	~make_slider.value(
-		item.id.asString, item.index, 0, columns - 1,
-		{|val| item.index = val.floor; item.index; })
-}));
+win_editor.layout = HLayout(
+	// build rules editor ui
+	VLayout(*combinations.collect({|item, i |
+		var tf = TextField().keyUpAction_(sync_rules_on_editor);
+		input_fields.put(i, tf);
+		GridLayout.rows([
+			StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
+	})),
+	// build hotspot editor ui
+	VLayout(*(hotspots.collect({ |item, i|
+		var slider = Slider2D().action_({|sl|
+			item.position = (sl.x * (columns - 1).round)@((1 - sl.y) * (rows - 1).round)});
+		var text = StaticText().string_(item.id.asString);
+		slider.setXY(1.0.rand, 1.0.rand);
+		slider.action.value(slider);
+		[text, slider];
+})).flat));
 
 // build automata ui
 win_automata.drawFunc = {
@@ -94,11 +97,11 @@ win_automata.drawFunc = {
 		// eval hotspot
 		var hit = 0;
 		var row = cells.last;
-		{row.at(item.index + hit).isInteger.if(
-			{(row.at(item.index + hit) > 0)},
+		{row.at(item.position.x + hit).isInteger.if(
+			{(row.at(item.position.x + hit) > 0)},
 			{false})}.while({hit = hit + 1});
 		// draw hotspot
-		rect.origin = ((item.index) * side)@((rows - 1) * side);
+		rect.origin = ((item.position.x) * side)@((item.position.y) * side);
 		rect.width = hit.max(1) * side;
 		Pen.fillColor = item.color;
 		Pen.fillRect(rect);

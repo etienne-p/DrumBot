@@ -21,8 +21,8 @@ main_window.view.keyDownAction = { |v, key|
 };
 
 ~hotspot_handler = { |id, val|
-	("GLOBAL Hit " ++ id.asString ++ " [" ++ (val / 4).min(1).asString ++ "]").postln;
-	if (synths.at(id).isNil.not) { synths[id].set(\t_gate, (val / 4).min(1)) };
+	if (synths.at(id).isNil.not) {
+		synths[id].set(\t_gate, (val / 4).min(1)) };
 };
 
 
@@ -37,15 +37,15 @@ synth_params = [
 	\kick -> [
 		[\brightness, 0.5, 0, 2],
 		[\clickDecay, 0.001, 0, 0.05],
-		[\thump, 0.1, 0.001, 0.3]],
+		[\thump, 0.04, 0.001, 0.3]],
 	\snare -> [
 		[\brightness, 0.5, 0, 2]],
 	\clap -> [
 		[\brightness, 0.5, 0, 2],
 		[\bw, 0.5, 0.1, 4]],
 	\hat -> [
-		[\attack, 0.05, 0, 0.4],
-		[\bw, 0.5, 0.1, 4]]];
+		[\attack, 0.03, 0, 0.4],
+		[\bw, 2.4, 0.1, 4]]];
 
 // add common parameters
 synth_params.do({|assoc|
