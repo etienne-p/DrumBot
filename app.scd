@@ -1,4 +1,4 @@
-var main_window, rout, synth_symbols, synths, key_dict, ui_elts;
+var main_window, rout, synth_symbols, synths, key_dict;
 
 // create synths
 synth_symbols = [\kick, \snare, \clap, \hat];

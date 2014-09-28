@@ -1,15 +1,17 @@
-var columns = 48;
-var rows = 48;
-var side = 6;
+var columns = 24;
+var rows = 24;
+var side = 12;
 var hit_threshold = 1;
 var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
 var win_editor = Window("editor").front;
-var sync_rules_on_editor, sync_editor_on_rules, input_fields;
+var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons, input_fields, init_buttons;
 
-var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
+//var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
+// TODO: remove it?
+var default_hotspot_handler = {};
 
 var hotspots = [\kick, \snare, \clap, \hat].collect({|item|(
 	id: item,
@@ -39,11 +41,13 @@ rules[1][0][1] = 0;
 rules[1][1][0] = 1;
 rules[1][1][1] = 0;
 
+input_fields = Array.newClear(combinations.size);
+
 sync_rules_on_editor = {
 	input_fields.collect({|item, i|
 		{|j, k, l| rules[j][k][l] = item.string.asInt.max(0).min(1)}.(*combinations[i]);
 	});
-	cells.first.do({|item, i| cells.first[i] = 2.rand});
+	sync_init_on_buttons.value;
 	sync_editor_on_rules.value;
 };
 
@@ -53,32 +57,47 @@ sync_editor_on_rules = {
 	})
 };
 
-input_fields = Array.newClear(combinations.size);
+sync_init_on_buttons = {
+	"yo".postln;
+	init_buttons.do({|item, i|
+		cells.first.put(i, item.value.asInteger);
+	})
+};
 
-win_editor.layout = HLayout(
-	// build rules editor ui
-	VLayout(*combinations.collect({|item, i |
-		var tf = TextField().keyUpAction_(sync_rules_on_editor);
-		input_fields.put(i, tf);
-		GridLayout.rows([
-			StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
-	})),
-	// build hotspot editor ui
-	VLayout(*(hotspots.collect({ |item, i|
-		var slider = Slider2D().action_({|sl|
-			item.position = ((sl.x * (columns - 1)).round)@(((1 - sl.y) * (rows - 1)).round)});
-		var text = StaticText().string_(item.id.asString);
-		slider.setXY(1.0.rand, 1.0.rand);
-		slider.action.value(slider);
-		[text, slider];
-})).flat));
+init_buttons = columns.collect({ Button()
+        .states_([
+		["0", Color.white, Color.black],
+		["1", Color.black, Color.white]
+	]).action_(sync_init_on_buttons)
+});
 
+win_editor.layout = VLayout(
+	HLayout(
+		// build rules editor ui
+		VLayout(*combinations.collect({|item, i |
+			var tf = TextField().keyUpAction_(sync_rules_on_editor);
+			input_fields.put(i, tf);
+			GridLayout.rows([
+				StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
+		})),
+		// build hotspot editor ui
+		VLayout(*(hotspots.collect({ |item, i|
+			var slider = Slider2D().action_({|sl|
+				item.position = ((sl.x * (columns - 1)).round)@(((1 - sl.y) * (rows - 1)).round)});
+			var text = StaticText().string_(item.id.asString);
+			slider.setXY(1.0.rand, 1.0.rand);
+			slider.action.value(slider);
+			[text, slider];
+	})).flat)),
+	// init buttons
+	HLayout(*init_buttons).spacing_(1)
+);
 // build automata ui
 win_automata.drawFunc = {
 	// update automata
 	var row = cells.first;
 	cells.addFirst(row.collect({ |item, i|
-		[-1, 0, 1].collect(
+		(-1..1).collect(
 			{|offset| row.at((i + offset).mod(columns))}
 		).inject(rules, _.at(_));
 	}));
