@@ -1,6 +1,6 @@
-var columns = 24;
-var rows = 24;
-var side = 12;
+var columns = 32;
+var rows = 32;
+var side = 16;
 var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
@@ -12,9 +12,9 @@ var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons, input_fiel
 // TODO: remove it?
 var default_hotspot_handler = {};
 
-var hotspots = [\kick, \snare, \clap, \hat].collect({|item|(
+var hotspots = [\kick, \snare, \clap, \hat].collect({|item, i|(
 	id: item,
-	hit: 2,
+	hit_threshold: 4 - i,
 	position: (columns.rand)@(rows.rand),
 	color: Color(*Array.fill(3, {1.0.rand})))
 });
@@ -131,12 +131,12 @@ win_automata.drawFunc = {
 			{false})}.while({hit = hit + 1});
 		// draw hotspot
 		rect.origin = ((item.position.x) * side)@((item.position.y) * side);
-		rect.width = item.hit * side;
+		rect.width = item.hit_threshold * side;
 		Pen.fillColor = item.color;
 		Pen.fillRect(rect);
 		Pen.fillStroke;
 		item.id.asString.drawAtPoint(rect.origin + (0@(-12)));
-		if (hit == item.hit) {
+		if (hit >= item.hit_threshold) {
 			~hotspot_handler.isNil.if({default_hotspot_handler}, {~hotspot_handler}).value(item.id, hit - 1) };
 	});
 };
