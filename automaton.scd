@@ -1,13 +1,12 @@
 var columns = 24;
 var rows = 24;
 var side = 12;
-var hit_threshold = 1;
 var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
 var win_editor = Window("editor").front;
-var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons, input_fields, init_buttons;
+var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons, input_fields, init_buttons, tempo_slider;
 
 //var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
 // TODO: remove it?
@@ -15,6 +14,7 @@ var default_hotspot_handler = {};
 
 var hotspots = [\kick, \snare, \clap, \hat].collect({|item|(
 	id: item,
+	hit: 2,
 	position: (columns.rand)@(rows.rand),
 	color: Color(*Array.fill(3, {1.0.rand})))
 });
@@ -58,7 +58,6 @@ sync_editor_on_rules = {
 };
 
 sync_init_on_buttons = {
-	"yo".postln;
 	init_buttons.do({|item, i|
 		cells.first.put(i, item.value.asInteger);
 	})
@@ -70,6 +69,9 @@ init_buttons = columns.collect({ Button()
 		["1", Color.black, Color.white]
 	]).action_(sync_init_on_buttons)
 });
+
+tempo_slider = Slider().orientation_(\horizontal);
+tempo_slider.value = 0.5;
 
 win_editor.layout = VLayout(
 	HLayout(
@@ -89,8 +91,16 @@ win_editor.layout = VLayout(
 			slider.action.value(slider);
 			[text, slider];
 	})).flat)),
-	// init buttons
-	HLayout(*init_buttons).spacing_(1)
+	VLayout(
+		// init conditions
+		HLayout(*init_buttons).spacing_(1),
+		Slider().orientation_(\horizontal).action_({|sl|
+			var index = (sl.value * (columns - 1)).round;
+			init_buttons.do({|item, i| item.value = if(i == index, 1, 0)});
+			sync_init_on_buttons.value;
+		}),
+		tempo_slider
+	)
 );
 // build automata ui
 win_automata.drawFunc = {
@@ -121,16 +131,16 @@ win_automata.drawFunc = {
 			{false})}.while({hit = hit + 1});
 		// draw hotspot
 		rect.origin = ((item.position.x) * side)@((item.position.y) * side);
-		rect.width = hit.max(1) * side;
+		rect.width = item.hit * side;
 		Pen.fillColor = item.color;
 		Pen.fillRect(rect);
 		Pen.fillStroke;
 		item.id.asString.drawAtPoint(rect.origin + (0@(-12)));
-		if (hit > hit_threshold) {
+		if (hit == item.hit) {
 			~hotspot_handler.isNil.if({default_hotspot_handler}, {~hotspot_handler}).value(item.id, hit - 1) };
 	});
 };
 
 sync_editor_on_rules.value;
 
-{ while { win_automata.isClosed.not } { win_automata.refresh; 0.1.wait; } }.fork(AppClock);
+{ while { win_automata.isClosed.not } { win_automata.refresh; (tempo_slider.value * 0.2).wait; } }.fork(AppClock);
