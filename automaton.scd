@@ -1,5 +1,5 @@
-var columns = 32;
-var rows = 32;
+var columns = 14;
+var rows = 24;
 var side = 16;
 var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
@@ -137,7 +137,7 @@ win_automata.drawFunc = {
 		Pen.fillStroke;
 		item.id.asString.drawAtPoint(rect.origin + (0@(-12)));
 		if (hit >= item.hit_threshold) {
-			~hotspot_handler.isNil.if({default_hotspot_handler}, {~hotspot_handler}).value(item.id, hit - 1) };
+			~play_drum.isNil.if({default_hotspot_handler}, {~play_drum}).value(item.id, 1) };
 	});
 };
 

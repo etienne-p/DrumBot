@@ -9,6 +9,3 @@
 	slider.action.value;
 	GridLayout.rows([slider, num_box, tf]);
 };
-
-
-~save.value

@@ -30,6 +30,7 @@ main_window.view.keyDownAction = { |v, key|
 main_window.onClose = {
 	Window.closeAll;
 	Server.local.freeAll;
+	Server.local.quit;
 };
 
 // describe specific synth parameters
