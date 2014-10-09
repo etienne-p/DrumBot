@@ -1,22 +1,20 @@
-var columns = 14;
+var columns = 32;
 var rows = 24;
 var side = 16;
 var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var rules = Array.fill3D(2, 2, 2, 0);
 var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
-var win_editor = Window("editor").front;
+var win_editor = Window("editor", Rect(0, 0, 600, 600)).front;
 var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons, input_fields, init_buttons, tempo_slider;
 
-//var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
-// TODO: remove it?
-var default_hotspot_handler = {};
+var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
 
 var hotspots = [\kick, \snare, \clap, \hat].collect({|item, i|(
 	id: item,
-	hit_threshold: 4 - i,
+	hit_threshold: 1,
 	position: (columns.rand)@(rows.rand),
-	color: Color(*Array.fill(3, {1.0.rand})))
+	color: Color.hsv(1.0.rand, 1.0, 1.0))
 });
 //var drag_origin;
 var combinations = {
@@ -37,7 +35,7 @@ rules[0][1][0] = 0;
 rules[0][1][0] = 0;
 rules[0][1][1] = 1;
 rules[1][0][0] = 0;
-rules[1][0][1] = 0;
+rules[1][0][1] = 1;
 rules[1][1][0] = 1;
 rules[1][1][1] = 0;
 
@@ -63,7 +61,7 @@ sync_init_on_buttons = {
 	})
 };
 
-init_buttons = columns.collect({ Button()
+init_buttons = columns.collect({ Button().maxWidth_(18)
         .states_([
 		["0", Color.white, Color.black],
 		["1", Color.black, Color.white]
@@ -74,33 +72,37 @@ tempo_slider = Slider().orientation_(\horizontal);
 tempo_slider.value = 0.5;
 
 win_editor.layout = VLayout(
-	HLayout(
-		// build rules editor ui
-		VLayout(*combinations.collect({|item, i |
-			var tf = TextField().keyUpAction_(sync_rules_on_editor);
-			input_fields.put(i, tf);
-			GridLayout.rows([
-				StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
-		})),
-		// build hotspot editor ui
-		VLayout(*(hotspots.collect({ |item, i|
-			var slider = Slider2D().action_({|sl|
-				item.position = ((sl.x * (columns - 1)).round)@(((1 - sl.y) * (rows - 1)).round)});
-			var text = StaticText().string_(item.id.asString);
-			slider.setXY(1.0.rand, 1.0.rand);
-			slider.action.value(slider);
-			[text, slider];
-	})).flat)),
-	VLayout(
-		// init conditions
-		HLayout(*init_buttons).spacing_(1),
-		Slider().orientation_(\horizontal).action_({|sl|
-			var index = (sl.value * (columns - 1)).round;
-			init_buttons.do({|item, i| item.value = if(i == index, 1, 0)});
-			sync_init_on_buttons.value;
-		}),
-		tempo_slider
-	)
+	// build rules editor ui
+	StaticText().string_("Automaton rules"),
+	HLayout(*combinations.collect({|item, i |
+		var tf = TextField().keyUpAction_(sync_rules_on_editor);
+		input_fields.put(i, tf);
+		GridLayout.columns([
+			StaticText().string_(item.collect(_.asString).inject("", _++_)), tf]);
+	})),
+	// init conditions
+	StaticText().string_("Automaton initial state"),
+	HLayout(*init_buttons).spacing_(1),
+	Slider().orientation_(\horizontal).action_({|sl|
+		var index = (sl.value * (columns - 1)).round;
+		init_buttons.do({|item, i| item.value = if(i == index, 1, 0)});
+		sync_init_on_buttons.value;
+	}),
+	// tempo control
+	StaticText().string_("Tempo"),
+	tempo_slider,
+	// build hotspot editor ui
+	StaticText().string_("Hotspots positions"),
+	VLayout(*(hotspots.collect({ |item, i|
+		var trig_slider = Slider().orientation_(\horizontal).action_({|sl|
+			item.hit_threshold = (1 + (sl.value * 5)).floor});
+		var pos_slider = Slider2D().action_({|sl|
+			item.position = ((sl.x * (columns - 1)).round)@(((1 - sl.y) * (rows - 1)).round)});
+		var text = StaticText().string_(item.id.asString);
+		pos_slider.setXY(1.0.rand, 1.0.rand);
+		pos_slider.action.value(pos_slider);
+		VLayout(text, trig_slider, pos_slider);
+	}).clump(2).collect({|sub| HLayout(*sub)})))
 );
 // build automata ui
 win_automata.drawFunc = {
@@ -137,7 +139,9 @@ win_automata.drawFunc = {
 		Pen.fillStroke;
 		item.id.asString.drawAtPoint(rect.origin + (0@(-12)));
 		if (hit >= item.hit_threshold) {
-			~play_drum.isNil.if({default_hotspot_handler}, {~play_drum}).value(item.id, 1) };
+			~play_drum.isNil.if(
+				{default_hotspot_handler},
+				{~play_drum}).value(item.id, (hit / 4.0).min(1.0)) };
 	});
 };
 

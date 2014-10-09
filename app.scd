@@ -9,7 +9,6 @@ volume = Dictionary.newFrom(
 
 // main window
 main_window = Window("main").front;
-main_window.alwaysOnTop = true;
 
 key_dict = [
 	\a, \kick,
