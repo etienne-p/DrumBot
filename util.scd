@@ -9,3 +9,23 @@
 	slider.action.value;
 	GridLayout.rows([slider, num_box, tf]);
 };
+
+~exit_app = {
+	Window.closeAll;
+	Server.local.freeAll;
+	Server.local.quit;
+};
+
+~save_settings = {
+	Dialog.savePanel({|path|
+		var config = List[
+			\init_state, ~init_state,
+			\rules, ~rules,
+			\hotspots, ~hotspots,
+			\synth_params, ~synth_params];
+		var file = File.open(path, "w");
+		file.write(Dictionary.newFrom(config).asCompileString);
+		file.close;
+		("Save settings at [" ++ path ++ "]").postln;
+	}, {"Save canceled!".postln});
+};

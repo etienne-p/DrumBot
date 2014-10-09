@@ -1,25 +1,46 @@
+// Automaton
 var columns = 32;
 var rows = 24;
 var side = 16;
 var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
-var rules = Array.fill3D(2, 2, 2, 0);
-var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).front;
-var win_editor = Window("editor", Rect(0, 0, 600, 600)).front;
-var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons, input_fields, init_buttons, tempo_slider;
+var combinations;
+// UI
+var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).onClose_(~exit_app).front;
+var win_editor = Window("editor", Rect(0, 0, 600, 600)).onClose_(~exit_app).front;
+var input_fields, init_buttons, tempo_slider;
+// UI functions
+var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons;
 
 var default_hotspot_handler = {|id, val|("Hit " ++ id.asString ++ " [" ++ val.asString ++ "]").postln};
 
-var hotspots = [\kick, \snare, \clap, \hat].collect({|item, i|(
-	id: item,
-	hit_threshold: 1,
-	position: (columns.rand)@(rows.rand),
-	color: Color.hsv(1.0.rand, 1.0, 1.0))
+(~init_state.isNil).if({~init_state = Array.fill(columns, 2.rand)});
+
+(~rules.isNil).if({
+	~rules = Array.fill3D(2, 2, 2, 0);
+	// da rule
+	~rules[0][0][0] = 1;
+	~rules[0][1][0] = 0;
+	~rules[0][1][0] = 0;
+	~rules[0][1][1] = 1;
+	~rules[1][0][0] = 0;
+	~rules[1][0][1] = 1;
+	~rules[1][1][0] = 1;
+	~rules[1][1][1] = 0;
 });
-//var drag_origin;
-var combinations = {
+
+(~hotspots.isNil).if({
+	~hotspots = ~synth_symbols.collect({|item, i|(
+		id: item,
+		hit_threshold: 1,
+		position: (columns.rand)@(rows.rand),
+		color: Color.hsv(1.0.rand, 1.0, 1.0))
+	})
+});
+
+combinations = {
 	var rv = List();
-	rules.do({|x, i|
+	~rules.do({|x, i|
 		x.do({|y, j|
 			y.do({|z, k|
 				rv.add([i, j, k]);
@@ -29,21 +50,11 @@ var combinations = {
 	rv;
 }.value;
 
-// da rule
-rules[0][0][0] = 1;
-rules[0][1][0] = 0;
-rules[0][1][0] = 0;
-rules[0][1][1] = 1;
-rules[1][0][0] = 0;
-rules[1][0][1] = 1;
-rules[1][1][0] = 1;
-rules[1][1][1] = 0;
-
 input_fields = Array.newClear(combinations.size);
 
 sync_rules_on_editor = {
 	input_fields.collect({|item, i|
-		{|j, k, l| rules[j][k][l] = item.string.asInt.max(0).min(1)}.(*combinations[i]);
+		{|j, k, l| ~rules[j][k][l] = item.string.asInt.max(0).min(1)}.(*combinations[i]);
 	});
 	sync_init_on_buttons.value;
 	sync_editor_on_rules.value;
@@ -51,17 +62,18 @@ sync_rules_on_editor = {
 
 sync_editor_on_rules = {
 	input_fields.do({|item, i|
-		item.string = combinations.[i].inject(rules, _.at(_)).asString;
+		item.string = combinations.[i].inject(~rules, _.at(_)).asString;
 	})
 };
 
 sync_init_on_buttons = {
 	init_buttons.do({|item, i|
+		~init_state[i] = item.value.asInteger; // for backup
 		cells.first.put(i, item.value.asInteger);
 	})
 };
 
-init_buttons = columns.collect({ Button().maxWidth_(18)
+init_buttons = columns.collect({Button().maxWidth_(18)
         .states_([
 		["0", Color.white, Color.black],
 		["1", Color.black, Color.white]
@@ -72,7 +84,7 @@ tempo_slider = Slider().orientation_(\horizontal);
 tempo_slider.value = 0.5;
 
 win_editor.layout = VLayout(
-	// build rules editor ui
+	// build ~rules editor ui
 	StaticText().string_("Automaton rules"),
 	HLayout(*combinations.collect({|item, i |
 		var tf = TextField().keyUpAction_(sync_rules_on_editor);
@@ -93,16 +105,17 @@ win_editor.layout = VLayout(
 	tempo_slider,
 	// build hotspot editor ui
 	StaticText().string_("Hotspots positions"),
-	VLayout(*(hotspots.collect({ |item, i|
+	VLayout(*(~hotspots.collect({ |item, i|
 		var trig_slider = Slider().orientation_(\horizontal).action_({|sl|
 			item.hit_threshold = (1 + (sl.value * 5)).floor});
 		var pos_slider = Slider2D().action_({|sl|
 			item.position = ((sl.x * (columns - 1)).round)@(((1 - sl.y) * (rows - 1)).round)});
 		var text = StaticText().string_(item.id.asString);
-		pos_slider.setXY(1.0.rand, 1.0.rand);
-		pos_slider.action.value(pos_slider);
+		pos_slider.setXY(item.position.x / (columns - 1), 1 - (item.position.y / (rows - 1)));
+		//pos_slider.action.value(pos_slider);
 		VLayout(text, trig_slider, pos_slider);
-	}).clump(2).collect({|sub| HLayout(*sub)})))
+	}).clump(2).collect({|sub| HLayout(*sub)}))),
+	Button().states_([["Save settings"]]).action_(~save_settings)
 );
 // build automata ui
 win_automata.drawFunc = {
@@ -111,7 +124,7 @@ win_automata.drawFunc = {
 	cells.addFirst(row.collect({ |item, i|
 		(-1..1).collect(
 			{|offset| row.at((i + offset).mod(columns))}
-		).inject(rules, _.at(_));
+		).inject(~rules, _.at(_));
 	}));
 	cells.pop;
 	// draw automata
@@ -124,7 +137,7 @@ win_automata.drawFunc = {
 		})
 	});
 	// handle hotspots
-	hotspots.do({|item|
+	~hotspots.do({|item|
 		// eval hotspot
 		var hit = 0;
 		var row = cells.at(item.position.y);
@@ -145,6 +158,14 @@ win_automata.drawFunc = {
 	});
 };
 
+// Init editor
 sync_editor_on_rules.value;
 
-{ while { win_automata.isClosed.not } { win_automata.refresh; (tempo_slider.value * 0.2).wait; } }.fork(AppClock);
+// Init automaton
+init_buttons.do({|btn, i| btn.value = ~init_state[i]});
+sync_init_on_buttons.value;
+
+{ while
+	{ win_automata.isClosed.not.and(win_editor.isClosed.not) }
+	{ win_automata.refresh; (tempo_slider.value * 0.2).wait; }
+}.fork(AppClock);
