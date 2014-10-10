@@ -1,7 +1,7 @@
 DrumBot
 =======
 
-A drum machine using a cellular automaton as its sequencer.
+A drum machine using a cellular automaton as its sequencer, made with SuperCollider.
 
 Execute the code in "main.scd" to launch the app.
 A dialog will pop up to let you open a settings file (such as settings/rythm1).

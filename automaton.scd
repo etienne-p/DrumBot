@@ -104,16 +104,20 @@ win_editor.layout = VLayout(
 	StaticText().string_("Tempo"),
 	tempo_slider,
 	// build hotspot editor ui
-	StaticText().string_("Hotspots positions"),
+	StaticText().string_("Hotspots"),
 	VLayout(*(~hotspots.collect({ |item, i|
 		var trig_slider = Slider().orientation_(\horizontal).action_({|sl|
 			item.hit_threshold = (1 + (sl.value * 5)).floor});
 		var pos_slider = Slider2D().action_({|sl|
 			item.position = ((sl.x * (columns - 1)).round)@(((1 - sl.y) * (rows - 1)).round)});
-		var text = StaticText().string_(item.id.asString);
 		pos_slider.setXY(item.position.x / (columns - 1), 1 - (item.position.y / (rows - 1)));
+		trig_slider.value = (item.hit_threshold - 1) / 5;
 		//pos_slider.action.value(pos_slider);
-		VLayout(text, trig_slider, pos_slider);
+		VLayout(
+			StaticText().string_(item.id.asString ++ " trigger threshold"),
+			trig_slider,
+			StaticText().string_(item.id.asString ++ " trigger position"),
+			pos_slider);
 	}).clump(2).collect({|sub| HLayout(*sub)}))),
 	Button().states_([["Save settings"]]).action_(~save_settings)
 );
