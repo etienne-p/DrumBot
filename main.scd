@@ -2,7 +2,7 @@
 var basePath = PathName(thisProcess.nowExecutingPath).pathOnly;
 
 var start_app = {
-	var files = ["util", "synthdefs", "app", "automaton"];
+	var files = ["util", "synthdefs", "drum_machine", "automaton"];
 	"starting app.".postln;
 	Server.local.boot;
 	Server.local.waitForBoot(

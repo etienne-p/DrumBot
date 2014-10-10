@@ -6,8 +6,8 @@ var rect = Rect(0, 0, side, side);
 var cells = Array.fill2D(rows, columns, {2.rand});
 var combinations;
 // UI
-var win_automata = Window("automata", Rect(0, 0, columns * side, rows * side)).onClose_(~exit_app).front;
-var win_editor = Window("editor", Rect(0, 0, 600, 600)).onClose_(~exit_app).front;
+var win_automata = Window("Automaton", Rect(0, 0, columns * side, rows * side)).onClose_(~exit_app).front;
+var win_editor = Window("Editor", Rect(0, 0, 600, 600)).onClose_(~exit_app).front;
 var input_fields, init_buttons, tempo_slider;
 // UI functions
 var sync_rules_on_editor, sync_editor_on_rules, sync_init_on_buttons;

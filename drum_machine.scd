@@ -1,4 +1,4 @@
-var main_window, rout, synth_symbols, synths, key_dict, volume;
+var win, synths, key_dict, volume;
 
 // create synths
 ~synth_symbols = [\kick, \snare, \clap, \hat];
@@ -8,7 +8,7 @@ volume = Dictionary.newFrom(
 	~synth_symbols.collect({|item, i|[item, 0.5] }).flat);
 
 // main window
-main_window = Window("main").onClose_(~exit_app).front;
+win = Window("Drum machine").onClose_(~exit_app).front;
 
 key_dict = [
 	\a, \kick,
@@ -21,7 +21,7 @@ key_dict = [
 		synths[id].set(\t_gate, val * volume[id]) };
 };
 
-main_window.view.keyDownAction = { |v, key|
+win.view.keyDownAction = { |v, key|
 	var synth = key_dict.at(key.asSymbol);
 	if (synth != nil) {~play_drum.value(synth, 1)};
 };
@@ -51,7 +51,7 @@ main_window.view.keyDownAction = { |v, key|
 });
 
 // build UI
-main_window.layout = VLayout(*(~synth_params.collect({|assoc|
+win.layout = VLayout(*(~synth_params.collect({|assoc|
 	assoc.value.collect({ |item, i|
 		~make_slider.value(
 			item[0], item[1], item[2], item[3],
